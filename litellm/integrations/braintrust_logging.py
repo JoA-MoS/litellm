@@ -276,7 +276,7 @@ class BraintrustLogger(CustomLogger):
 
             # Allow metadata override for span name
             span_name = metadata.get("span_name", "Chat Completion")
-            
+
             request_data = {
                 "id": litellm_call_id,
                 "input": prompt["messages"],
@@ -431,7 +431,7 @@ class BraintrustLogger(CustomLogger):
 
             # Allow metadata override for span name
             span_name = metadata.get("span_name", "Chat Completion")
-            
+
             request_data = {
                 "id": litellm_call_id,
                 "input": prompt["messages"],

@@ -245,10 +245,11 @@ class UsageMetadata(TypedDict, total=False):
 class TokenCountDetailsResponse(TypedDict):
     """
     Response structure for token count details with modality breakdown.
-    
+
     Example:
         {'totalTokens': 12, 'promptTokensDetails': [{'modality': 'TEXT', 'tokenCount': 12}]}
     """
+
     totalTokens: int
     promptTokensDetails: List[PromptTokensDetails]
 

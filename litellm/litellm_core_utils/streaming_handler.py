@@ -96,9 +96,9 @@ class CustomStreamWrapper:
 
         self.system_fingerprint: Optional[str] = None
         self.received_finish_reason: Optional[str] = None
-        self.intermittent_finish_reason: Optional[str] = (
-            None  # finish reasons that show up mid-stream
-        )
+        self.intermittent_finish_reason: Optional[
+            str
+        ] = None  # finish reasons that show up mid-stream
         self.special_tokens = [
             "<|assistant|>",
             "<|system|>",
@@ -780,24 +780,35 @@ class CustomStreamWrapper:
         """
         if len(model_response.choices) == 0:
             return False
-            
+
         delta = model_response.choices[0].delta
-        
+
         # Check for tool_calls or function_call
-        if getattr(delta, TOOL_CALLS_ATTRIBUTE, None) is not None or getattr(delta, FUNCTION_CALL_ATTRIBUTE, None) is not None:
+        if (
+            getattr(delta, TOOL_CALLS_ATTRIBUTE, None) is not None
+            or getattr(delta, FUNCTION_CALL_ATTRIBUTE, None) is not None
+        ):
             return True
-            
+
         # Check for audio
-        if hasattr(delta, AUDIO_ATTRIBUTE) and getattr(delta, AUDIO_ATTRIBUTE, None) is not None:
+        if (
+            hasattr(delta, AUDIO_ATTRIBUTE)
+            and getattr(delta, AUDIO_ATTRIBUTE, None) is not None
+        ):
             return True
-            
+
         # Check for image
-        if hasattr(delta, IMAGE_ATTRIBUTE) and getattr(delta, IMAGE_ATTRIBUTE, None) is not None:
+        if (
+            hasattr(delta, IMAGE_ATTRIBUTE)
+            and getattr(delta, IMAGE_ATTRIBUTE, None) is not None
+        ):
             return True
-            
+
         return False
 
-    def _handle_special_delta_content(self, model_response: ModelResponseStream) -> ModelResponseStream:
+    def _handle_special_delta_content(
+        self, model_response: ModelResponseStream
+    ) -> ModelResponseStream:
         """
         Handle special delta content types by stripping role and returning the response.
         """
@@ -809,7 +820,9 @@ class CustomStreamWrapper:
         """
         return delta is not None and getattr(delta, attribute_name, None) is not None
 
-    def _copy_delta_attribute(self, source_delta, target_delta, attribute_name: str) -> None:
+    def _copy_delta_attribute(
+        self, source_delta, target_delta, attribute_name: str
+    ) -> None:
         """
         Copy a specific attribute from source delta to target delta.
         """
@@ -825,14 +838,18 @@ class CustomStreamWrapper:
                 return True
         return False
 
-    def _handle_special_delta_attributes(self, delta, model_response: "ModelResponseStream") -> None:
+    def _handle_special_delta_attributes(
+        self, delta, model_response: "ModelResponseStream"
+    ) -> None:
         """
         Handle special delta attributes (audio, image) by copying them to model_response.
         """
         special_attributes = [AUDIO_ATTRIBUTE, IMAGE_ATTRIBUTE]
         for attribute in special_attributes:
             if self._has_special_delta_attribute(delta, attribute):
-                self._copy_delta_attribute(delta, model_response.choices[0].delta, attribute)
+                self._copy_delta_attribute(
+                    delta, model_response.choices[0].delta, attribute
+                )
 
     def return_processed_chunk_logic(  # noqa
         self,
@@ -864,7 +881,6 @@ class CustomStreamWrapper:
                 ## check if openai/azure chunk
                 original_chunk = response_obj.get("original_chunk", None)
                 if original_chunk:
-
                     if len(original_chunk.choices) > 0:
                         choices = []
                         for choice in original_chunk.choices:
@@ -881,7 +897,6 @@ class CustomStreamWrapper:
                         print_verbose(f"choices in streaming: {choices}")
                         setattr(model_response, "choices", choices)
                     else:
-
                         return
                     model_response.system_fingerprint = (
                         original_chunk.system_fingerprint
@@ -1407,9 +1422,9 @@ class CustomStreamWrapper:
                             _json_delta = delta.model_dump()
                             print_verbose(f"_json_delta: {_json_delta}")
                             if "role" not in _json_delta or _json_delta["role"] is None:
-                                _json_delta["role"] = (
-                                    "assistant"  # mistral's api returns role as None
-                                )
+                                _json_delta[
+                                    "role"
+                                ] = "assistant"  # mistral's api returns role as None
                             if "tool_calls" in _json_delta and isinstance(
                                 _json_delta["tool_calls"], list
                             ):
@@ -1819,9 +1834,9 @@ class CustomStreamWrapper:
                         chunk = next(self.completion_stream)
                     if chunk is not None and chunk != b"":
                         print_verbose(f"PROCESSED CHUNK PRE CHUNK CREATOR: {chunk}")
-                        processed_chunk: Optional[ModelResponseStream] = (
-                            self.chunk_creator(chunk=chunk)
-                        )
+                        processed_chunk: Optional[
+                            ModelResponseStream
+                        ] = self.chunk_creator(chunk=chunk)
                         print_verbose(
                             f"PROCESSED CHUNK POST CHUNK CREATOR: {processed_chunk}"
                         )
