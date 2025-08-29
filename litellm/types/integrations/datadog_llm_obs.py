@@ -20,7 +20,6 @@ class OutputMeta(TypedDict):
 
 class DDLLMObsError(TypedDict, total=False):
     """Error information on the span according to DD LLM Obs API spec"""
-
     message: str  # The error message
     stack: Optional[str]  # The stack trace
     type: Optional[str]  # The error type
@@ -54,7 +53,7 @@ class LLMObsPayload(TypedDict, total=False):
     duration: int
     metrics: LLMMetrics
     tags: List
-    status: Literal["ok", "error"]  # Error status ("ok" or "error"). Defaults to "ok".
+    status: Literal["ok", "error"] # Error status ("ok" or "error"). Defaults to "ok".
 
 
 class DDSpanAttributes(TypedDict):
@@ -72,7 +71,6 @@ class DatadogLLMObsInitParams(StandardCustomLoggerInitParams):
     """
     Params for initializing a DatadogLLMObs logger on litellm
     """
-
     pass
 
 

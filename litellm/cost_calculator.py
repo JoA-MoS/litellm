@@ -675,9 +675,9 @@ def completion_cost(  # noqa: PLR0915
                     or isinstance(completion_response, dict)
                 ):  # tts returns a custom class
                     if isinstance(completion_response, dict):
-                        usage_obj: Optional[
-                            Union[dict, Usage]
-                        ] = completion_response.get("usage", {})
+                        usage_obj: Optional[Union[dict, Usage]] = (
+                            completion_response.get("usage", {})
+                        )
                     else:
                         usage_obj = getattr(completion_response, "usage", {})
                     if isinstance(usage_obj, BaseModel) and not _is_known_usage_objects(
@@ -1279,9 +1279,7 @@ class BaseTokenUsageProcessor:
                     not hasattr(combined, "completion_tokens_details")
                     or not combined.completion_tokens_details
                 ):
-                    combined.completion_tokens_details = (
-                        CompletionTokensDetailsWrapper()
-                    )
+                    combined.completion_tokens_details = CompletionTokensDetailsWrapper()
 
                 # Check what keys exist in the model's completion_tokens_details
                 for attr in usage.completion_tokens_details.model_fields:

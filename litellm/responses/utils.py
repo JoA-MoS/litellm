@@ -24,6 +24,7 @@ class ResponsesAPIRequestUtils:
         custom_llm_provider: Optional[str],
         model: str,
     ):
+
         if supported_params is None:
             return
         unsupported_params = {}

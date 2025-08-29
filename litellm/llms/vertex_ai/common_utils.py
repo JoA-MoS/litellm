@@ -537,18 +537,17 @@ def is_global_only_vertex_model(model: str) -> bool:
         return False
     return "global" in supported_regions
 
-
-class VertexAIModelInfo(BaseLLMModelInfo):
+class VertexAIModelInfo(BaseLLMModelInfo):    
     def get_token_counter(self) -> Optional[BaseTokenCounter]:
         """
         Factory method to create a token counter for this provider.
-
+        
         Returns:
             Optional TokenCounterInterface implementation for this provider,
             or None if token counting is not supported.
         """
         return VertexAITokenCounter()
-
+    
     def validate_environment(
         self,
         headers: dict,
@@ -560,7 +559,7 @@ class VertexAIModelInfo(BaseLLMModelInfo):
         api_base: Optional[str] = None,
     ) -> dict:
         raise NotImplementedError("Vertex AI models are not supported yet")
-
+    
     def get_models(
         self, api_key: Optional[str] = None, api_base: Optional[str] = None
     ) -> List[str]:
@@ -579,6 +578,8 @@ class VertexAIModelInfo(BaseLLMModelInfo):
     ) -> Optional[str]:
         raise NotImplementedError("Vertex AI models are not supported yet")
 
+
+
     @staticmethod
     def get_base_model(model: str) -> Optional[str]:
         """
@@ -592,15 +593,13 @@ class VertexAIModelInfo(BaseLLMModelInfo):
 
 class VertexAITokenCounter(BaseTokenCounter):
     """Token counter implementation for Google AI Studio provider."""
-
     def should_use_token_counting_api(
-        self,
+        self, 
         custom_llm_provider: Optional[str] = None,
     ) -> bool:
         from litellm.types.utils import LlmProviders
-
         return custom_llm_provider == LlmProviders.VERTEX_AI.value
-
+    
     async def count_tokens(
         self,
         model_to_use: str,
@@ -612,11 +611,8 @@ class VertexAITokenCounter(BaseTokenCounter):
         import copy
 
         from litellm.llms.vertex_ai.count_tokens.handler import VertexAITokenCounter
-
         deployment = deployment or {}
-        count_tokens_params_request = copy.deepcopy(
-            deployment.get("litellm_params", {})
-        )
+        count_tokens_params_request = copy.deepcopy(deployment.get("litellm_params", {}))
         count_tokens_params = {
             "model": model_to_use,
             "contents": contents,
@@ -625,7 +621,7 @@ class VertexAITokenCounter(BaseTokenCounter):
         result = await VertexAITokenCounter().acount_tokens(
             **count_tokens_params_request,
         )
-
+        
         if result is not None:
             return TokenCountResponse(
                 total_tokens=result.get("totalTokens", 0),
@@ -634,5 +630,5 @@ class VertexAITokenCounter(BaseTokenCounter):
                 tokenizer_type=result.get("tokenizer_used", ""),
                 original_response=result,
             )
-
+        
         return None

@@ -82,9 +82,7 @@ def completions(
             role, content = msg.split(":", 1)
             messages.append({"role": role.strip(), "content": content.strip()})
         except ValueError:
-            raise click.BadParameter(
-                f"Invalid message format: {msg}. Expected format: 'role:content'"
-            )
+            raise click.BadParameter(f"Invalid message format: {msg}. Expected format: 'role:content'")
 
     client = ChatClient(ctx.obj["base_url"], ctx.obj["api_key"])
     try:

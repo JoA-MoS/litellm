@@ -87,9 +87,7 @@ class KeysManagementClient:
         if include_team_keys is not None:
             params["include_team_keys"] = str(include_team_keys).lower()
 
-        request = requests.Request(
-            "GET", url, headers=self._get_headers(), params=params
-        )
+        request = requests.Request("GET", url, headers=self._get_headers(), params=params)
 
         if return_request:
             return request
@@ -223,9 +221,7 @@ class KeysManagementClient:
                 raise UnauthorizedError(e)
             raise
 
-    def info(
-        self, key: str, return_request: bool = False
-    ) -> Union[Dict[str, Any], requests.Request]:
+    def info(self, key: str, return_request: bool = False) -> Union[Dict[str, Any], requests.Request]:
         """
         Get information about API keys.
 
