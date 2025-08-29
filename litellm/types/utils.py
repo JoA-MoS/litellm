@@ -646,7 +646,7 @@ class Message(OpenAIObject):
             # OpenAI compatible APIs like mistral API will raise an error if audio is passed in
             if hasattr(self, "audio"):
                 del self.audio
-        
+
         if image is None:
             if hasattr(self, "image"):
                 del self.image
@@ -741,7 +741,7 @@ class Delta(OpenAIObject):
             self.annotations = annotations
         else:
             del self.annotations
-        
+
         if image is not None:
             self.image = image
         else:
@@ -1927,7 +1927,9 @@ class StandardLoggingMetadata(StandardLoggingUserAPIKeyMetadata):
     vector_store_request_metadata: Optional[List[StandardLoggingVectorStoreRequest]]
     applied_guardrails: Optional[List[str]]
     usage_object: Optional[dict]
-    cold_storage_object_key: Optional[str]  # S3/GCS object key for cold storage retrieval
+    cold_storage_object_key: Optional[
+        str
+    ]  # S3/GCS object key for cold storage retrieval
 
 
 class StandardLoggingAdditionalHeaders(TypedDict, total=False):

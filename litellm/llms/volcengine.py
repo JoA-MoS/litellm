@@ -82,17 +82,19 @@ class VolcEngineConfig(OpenAILikeChatConfig):
 
         if "thinking" in optional_params:
             thinking_value = optional_params.pop("thinking")
-            
+
             # Handle disabled thinking case - don't add to extra_body if disabled
             if (
-                thinking_value is not None 
-                and isinstance(thinking_value, dict) 
+                thinking_value is not None
+                and isinstance(thinking_value, dict)
                 and thinking_value.get("type") == "disabled"
             ):
                 # Skip adding thinking parameter when it's disabled
                 pass
             else:
                 # Add thinking parameter to extra_body for all other cases
-                optional_params.setdefault("extra_body", {})["thinking"] = thinking_value
+                optional_params.setdefault("extra_body", {})[
+                    "thinking"
+                ] = thinking_value
 
         return optional_params

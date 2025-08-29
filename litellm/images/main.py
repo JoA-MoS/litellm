@@ -90,12 +90,12 @@ async def aimage_generation(*args, **kwargs) -> ImageResponse:
             response = init_response
         elif asyncio.iscoroutine(init_response):
             response = await init_response  # type: ignore
-        
+
         if response is None:
             raise ValueError(
                 "Unable to get Image Response. Please pass a valid llm_provider."
             )
-        
+
         return response
     except Exception as e:
         custom_llm_provider = custom_llm_provider or "openai"
@@ -173,10 +173,7 @@ def image_generation(  # noqa: PLR0915
     api_version: Optional[str] = None,
     custom_llm_provider=None,
     **kwargs,
-) -> Union[
-        ImageResponse,
-        Coroutine[Any, Any, ImageResponse],
-    ]:
+) -> Union[ImageResponse, Coroutine[Any, Any, ImageResponse],]:
     """
     Maps the https://api.openai.com/v1/images/generations endpoint.
 
@@ -344,8 +341,10 @@ def image_generation(  # noqa: PLR0915
             litellm.LlmProviders.GEMINI,
         ):
             if image_generation_config is None:
-                raise ValueError(f"image generation config is not supported for {custom_llm_provider}")
-            
+                raise ValueError(
+                    f"image generation config is not supported for {custom_llm_provider}"
+                )
+
             return llm_http_handler.image_generation_handler(
                 api_key=api_key,
                 model=model,
@@ -360,6 +359,7 @@ def image_generation(  # noqa: PLR0915
             )
         elif custom_llm_provider == "azure_ai":
             from litellm.llms.azure_ai.common_utils import AzureFoundryModelInfo
+
             api_base = AzureFoundryModelInfo.get_api_base(api_base)
             api_key = AzureFoundryModelInfo.get_api_key(api_key)
             if extra_headers is not None:
@@ -420,7 +420,7 @@ def image_generation(  # noqa: PLR0915
                 aimg_generation=aimg_generation,
                 client=client,
                 api_base=api_base,
-                api_key=api_key
+                api_key=api_key,
             )
         elif custom_llm_provider == "vertex_ai":
             vertex_ai_project = (
@@ -705,7 +705,7 @@ def image_edit(
         litellm_call_id: Optional[str] = kwargs.get("litellm_call_id", None)
         _is_async = kwargs.pop("async_call", False) is True
 
-        #add images / or return a single image
+        # add images / or return a single image
         images = image if isinstance(image, list) else [image]
 
         # get llm provider logic
