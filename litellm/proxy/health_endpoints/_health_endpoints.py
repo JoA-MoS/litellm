@@ -378,10 +378,15 @@ async def _perform_health_check_and_save(
     start_time,
     user_id,
     model_id=None,
+    user_api_key_dict=None,
 ):
     """Helper function to perform health check and save results to database"""
     healthy_endpoints, unhealthy_endpoints = await perform_health_check(
-        model_list=model_list, cli_model=cli_model, model=target_model, details=details
+        model_list=model_list, 
+        cli_model=cli_model, 
+        model=target_model, 
+        details=details,
+        user_api_key_dict=user_api_key_dict
     )
 
     # Optionally save health check result to database (non-blocking)
@@ -490,6 +495,7 @@ async def health_endpoint(
                     start_time=start_time,
                     user_id=user_api_key_dict.user_id,
                     model_id=None,  # CLI model doesn't have model_id
+                    user_api_key_dict=user_api_key_dict,
                 )
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -513,6 +519,7 @@ async def health_endpoint(
                 start_time=start_time,
                 user_id=user_api_key_dict.user_id,
                 model_id=model_id,
+                user_api_key_dict=user_api_key_dict,
             )
     except Exception as e:
         verbose_proxy_logger.error(

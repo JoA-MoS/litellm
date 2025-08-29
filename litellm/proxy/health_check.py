@@ -3,12 +3,15 @@
 import asyncio
 import logging
 import random
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 import litellm
 
 logger = logging.getLogger(__name__)
 from litellm.constants import HEALTH_CHECK_TIMEOUT_SECONDS
+
+if TYPE_CHECKING:
+    from litellm.proxy._types import UserAPIKeyAuth
 
 ILLEGAL_DISPLAY_PARAMS = [
     "messages",
@@ -49,18 +52,22 @@ def filter_deployments_by_id(
 ) -> List:
     seen_ids = set()
     filtered_deployments = []
+    deployments_without_id = []
 
     for deployment in model_list:
         _model_info = deployment.get("model_info") or {}
         _id = _model_info.get("id") or None
         if _id is None:
+            # Keep deployments without ID - don't filter them out
+            deployments_without_id.append(deployment)
             continue
 
         if _id not in seen_ids:
             seen_ids.add(_id)
             filtered_deployments.append(deployment)
 
-    return filtered_deployments
+    # Return both filtered deployments with ID and all deployments without ID
+    return filtered_deployments + deployments_without_id
 
 
 async def run_with_timeout(task, timeout):
@@ -80,10 +87,134 @@ async def run_with_timeout(task, timeout):
         return {"error": "Timeout exceeded"}
 
 
-async def _perform_health_check(model_list: list, details: Optional[bool] = True):
+async def _proxy_health_check(
+    model_params: dict,
+    mode: Optional[str] = None,
+    user_api_key_dict: Optional["UserAPIKeyAuth"] = None,
+) -> dict:
+    """
+    Perform health check through proxy request processing to ensure hooks are called.
+    This is used when custom authentication or other hooks need to be executed.
+    """
+    try:
+        from litellm.proxy.common_request_processing import ProxyBaseLLMRequestProcessing
+        
+        # Get proxy_logging_obj from proxy_server if available
+        proxy_logging_obj = None
+        try:
+            from litellm.proxy.proxy_server import proxy_logging_obj as plo
+            proxy_logging_obj = plo
+        except ImportError:
+            # If not available, create a minimal one
+            from litellm.proxy.utils import ProxyLogging, DualCache
+            proxy_logging_obj = ProxyLogging(user_api_key_cache=DualCache())
+        
+        # Prepare the request data for health check
+        health_check_data = {
+            "model": model_params.get("model"),
+            "messages": model_params.get("messages", _get_random_llm_message()),
+            "max_tokens": 1,  # Minimal tokens for health check
+            "temperature": 0,  # Consistent results
+        }
+        
+        # Add any additional params that might be needed
+        for key in ["api_key", "api_base", "api_version"]:
+            if key in model_params:
+                health_check_data[key] = model_params[key]
+        
+        # Create a minimal request processor
+        request_processor = ProxyBaseLLMRequestProcessing(data=health_check_data)
+        
+        # Create a mock request object
+        class MockRequest:
+            def __init__(self):
+                self.headers = {}
+                self.method = "POST"
+                self.url = type('MockURL', (), {'path': '/health'})()
+                self.client = type('MockClient', (), {'host': 'localhost'})()
+                self.state = type('MockState', (), {'route_cache': {}})()
+                self.query_params = {}
+        
+        mock_request = MockRequest()
+        
+        if user_api_key_dict is None:
+            # Create a basic user API key dict for health checks
+            from litellm.proxy._types import UserAPIKeyAuth
+            user_api_key_dict = UserAPIKeyAuth(
+                api_key="health-check",
+                user_id="health-check",
+                user_role="proxy_admin",
+                models=[],
+                team_id=None,
+            )
+        
+        # Process through proxy pre-call logic to execute hooks
+        processed_data, logging_obj = await request_processor.common_processing_pre_call_logic(
+            request=mock_request,
+            general_settings={},
+            user_api_key_dict=user_api_key_dict,
+            proxy_logging_obj=proxy_logging_obj,
+            proxy_config=type('MockProxyConfig', (), {})(),  # Empty proxy config
+            route_type="acompletion",
+        )
+        
+        # Now call the health check with processed data
+        result = await litellm.ahealth_check(
+            model_params=processed_data,
+            mode=mode,
+            prompt=processed_data.get("messages", [{"role": "user", "content": "test"}])[0].get("content", "test"),
+            input=["test from litellm"],
+        )
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Proxy health check failed: {e}")
+        # Fallback to direct health check if proxy processing fails
+        return await litellm.ahealth_check(
+            model_params=model_params,
+            mode=mode,
+            prompt="test from litellm",
+            input=["test from litellm"],
+        )
+
+
+def _should_use_proxy_health_check() -> bool:
+    """
+    Determine if health checks should route through proxy hooks.
+    Returns True if there are custom callbacks/hooks that need to be executed.
+    """
+    try:
+        # Check if there are any custom callbacks configured
+        if litellm.callbacks and len(litellm.callbacks) > 0:
+            from litellm.integrations.custom_logger import CustomLogger
+            
+            # Check if any callbacks have async_pre_call_hook defined
+            for callback in litellm.callbacks:
+                if isinstance(callback, CustomLogger):
+                    if (
+                        hasattr(callback, 'async_pre_call_hook') and 
+                        callback.__class__.async_pre_call_hook != CustomLogger.async_pre_call_hook
+                    ):
+                        return True
+                        
+        return False
+    except Exception:
+        # If we can't determine, err on the side of caution and don't use proxy
+        return False
+
+
+async def _perform_health_check(
+    model_list: list, 
+    details: Optional[bool] = True,
+    user_api_key_dict: Optional["UserAPIKeyAuth"] = None
+):
     """
     Perform a health check for each model in the list.
+    Now supports routing through proxy hooks when custom authentication is needed.
     """
+    use_proxy_health_check = _should_use_proxy_health_check()
+    logger.debug(f"Using proxy health check: {use_proxy_health_check}")
 
     tasks = []
     for model in model_list:
@@ -95,15 +226,27 @@ async def _perform_health_check(model_list: list, details: Optional[bool] = True
         )
         timeout = model_info.get("health_check_timeout") or HEALTH_CHECK_TIMEOUT_SECONDS
 
-        task = run_with_timeout(
-            litellm.ahealth_check(
-                model["litellm_params"],
-                mode=mode,
-                prompt="test from litellm",
-                input=["test from litellm"],
-            ),
-            timeout,
-        )
+        if use_proxy_health_check:
+            # Route through proxy to execute hooks
+            task = run_with_timeout(
+                _proxy_health_check(
+                    model_params=litellm_params,
+                    mode=mode,
+                    user_api_key_dict=user_api_key_dict,
+                ),
+                timeout,
+            )
+        else:
+            # Use direct health check (original behavior)
+            task = run_with_timeout(
+                litellm.ahealth_check(
+                    model_params=litellm_params,
+                    mode=mode,
+                    prompt="test from litellm",
+                    input=["test from litellm"],
+                ),
+                timeout,
+            )
 
         tasks.append(task)
 
@@ -150,6 +293,7 @@ async def perform_health_check(
     model: Optional[str] = None,
     cli_model: Optional[str] = None,
     details: Optional[bool] = True,
+    user_api_key_dict: Optional["UserAPIKeyAuth"] = None,
 ):
     """
     Perform a health check on the system.
@@ -177,7 +321,7 @@ async def perform_health_check(
         model_list=model_list
     )  # filter duplicate deployments (e.g. when model alias'es are used)
     healthy_endpoints, unhealthy_endpoints = await _perform_health_check(
-        model_list, details
+        model_list, details, user_api_key_dict
     )
 
     return healthy_endpoints, unhealthy_endpoints
