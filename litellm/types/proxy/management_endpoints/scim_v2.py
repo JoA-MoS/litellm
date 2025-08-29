@@ -101,7 +101,9 @@ class SCIMFeature(BaseModel):
 
 
 class SCIMServiceProviderConfig(BaseModel):
-    schemas: List[str] = ["urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"]
+    schemas: List[str] = [
+        "urn:ietf:params:scim:schemas:core:2.0:ServiceProviderConfig"
+    ]
     patch: SCIMFeature = SCIMFeature(supported=True)
     bulk: SCIMFeature = SCIMFeature(supported=False)
     filter: SCIMFeature = SCIMFeature(supported=False)

@@ -58,7 +58,7 @@ class DeepgramAudioTranscriptionConfig(BaseAudioTranscriptionConfig):
     ) -> AudioTranscriptionRequestData:
         """
         Processes the audio file input based on its type and returns AudioTranscriptionRequestData.
-
+        
         For Deepgram, the binary audio data is sent directly as the request body.
 
         Args:
@@ -69,11 +69,12 @@ class DeepgramAudioTranscriptionConfig(BaseAudioTranscriptionConfig):
         """
         # Use common utility to process the audio file
         processed_audio = process_audio_file(audio_file)
-
+        
         # Return structured data with binary content and no files
         # For Deepgram, we send binary data directly as request body
         return AudioTranscriptionRequestData(
-            data=processed_audio.file_content, files=None
+            data=processed_audio.file_content,
+            files=None
         )
 
     def transform_audio_transcription_response(
@@ -98,9 +99,9 @@ class DeepgramAudioTranscriptionConfig(BaseAudioTranscriptionConfig):
 
             # Add additional metadata matching OpenAI format
             response["task"] = "transcribe"
-            response[
-                "language"
-            ] = "english"  # Deepgram auto-detects but doesn't return language
+            response["language"] = (
+                "english"  # Deepgram auto-detects but doesn't return language
+            )
             response["duration"] = response_json["metadata"]["duration"]
 
             # Transform words to match OpenAI format
@@ -149,6 +150,7 @@ class DeepgramAudioTranscriptionConfig(BaseAudioTranscriptionConfig):
 
         return url
 
+
     def _format_param_value(self, value) -> str:
         """
         Formats a parameter value for use in query string.
@@ -178,7 +180,7 @@ class DeepgramAudioTranscriptionConfig(BaseAudioTranscriptionConfig):
         provider_specific_params = self.get_provider_specific_params(
             optional_params=optional_params,
             model=model,
-            openai_params=self.get_supported_openai_params(model),
+            openai_params=self.get_supported_openai_params(model)
         )
 
         for key, value in provider_specific_params.items():

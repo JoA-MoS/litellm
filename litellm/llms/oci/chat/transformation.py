@@ -255,12 +255,7 @@ class OCIChatConfig(BaseConfig):
         oci_key = optional_params.get("oci_key")
         oci_key_file = optional_params.get("oci_key_file")
 
-        if (
-            not oci_user
-            or not oci_fingerprint
-            or not oci_tenancy
-            or not (oci_key or oci_key_file)
-        ):
+        if not oci_user or not oci_fingerprint or not oci_tenancy or not (oci_key or oci_key_file):
             raise Exception(
                 "Missing required parameters: oci_user, oci_fingerprint, oci_tenancy, "
                 "and at least one of oci_key or oci_key_file."

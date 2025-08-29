@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class MCPTool(BaseModel):
+
     model_config: ClassVar[ConfigDict] = ConfigDict(arbitrary_types_allowed=True)
     name: str
     description: str

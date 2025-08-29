@@ -904,7 +904,7 @@ class JWTAuthManager:
                 if end_user_id
                 else None
             )
-
+        
         team_membership_object: Optional[LiteLLM_TeamMembership] = None
         if user_id and team_id:
             team_membership_object = (
@@ -1145,12 +1145,7 @@ class JWTAuthManager:
             )
 
         # Get other objects
-        (
-            user_object,
-            org_object,
-            end_user_object,
-            team_membership_object,
-        ) = await JWTAuthManager.get_objects(
+        user_object, org_object, end_user_object, team_membership_object = await JWTAuthManager.get_objects(
             user_id=user_id,
             user_email=user_email,
             org_id=org_id,
@@ -1191,6 +1186,8 @@ class JWTAuthManager:
             is_proxy_admin = True
         else:
             is_proxy_admin = False
+        
+
 
         return JWTAuthBuilderResult(
             is_proxy_admin=is_proxy_admin,

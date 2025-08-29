@@ -52,7 +52,7 @@ class VertexAIPartnerModels(VertexBase):
         ):
             return True
         return False
-
+    
     @staticmethod
     def should_use_openai_handler(model: str):
         OPENAI_LIKE_VERTEX_PROVIDERS = [

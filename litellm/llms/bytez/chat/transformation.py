@@ -91,11 +91,13 @@ class BytezChatConfig(BaseConfig):
         model: str,
         drop_params: bool,
     ) -> dict:
+
         adapted_params = {}
 
         all_params = {**non_default_params, **optional_params}
 
         for key, value in all_params.items():
+
             alias = self.openai_to_bytez_param_map.get(key)
 
             if alias is False:
@@ -122,6 +124,7 @@ class BytezChatConfig(BaseConfig):
         api_key: Optional[str] = None,
         api_base: Optional[str] = None,
     ) -> dict:
+
         headers.update(
             {
                 "content-type": "application/json",
@@ -137,6 +140,7 @@ class BytezChatConfig(BaseConfig):
 
         if not api_key:
             raise Exception("Missing api_key, make sure you pass in your api key")
+
 
         return headers
 
@@ -189,6 +193,7 @@ class BytezChatConfig(BaseConfig):
         api_key: Optional[str] = None,
         json_mode: Optional[bool] = None,
     ) -> ModelResponse:
+
         json = raw_response.json()  # noqa: F811
 
         error = json.get("error")
@@ -382,11 +387,13 @@ open_ai_to_bytez_content_item_map = {
 
 
 def adapt_messages_to_bytez_standard(messages: List[Dict]):
+
     messages = _adapt_string_only_content_to_lists(messages)
 
     new_messages = []
 
     for message in messages:
+
         role = message["role"]
         content: list = message["content"]
 
@@ -426,6 +433,7 @@ def _adapt_string_only_content_to_lists(messages: List[Dict]):
     new_messages = []
 
     for message in messages:
+
         role = message.get("role")
         content = message.get("content")
 
@@ -438,6 +446,7 @@ def _adapt_string_only_content_to_lists(messages: List[Dict]):
             new_content.append(content)
 
         elif isinstance(content, list):
+
             new_content_items = []
             for content_item in content:
                 if isinstance(content_item, str):

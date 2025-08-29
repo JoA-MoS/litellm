@@ -307,9 +307,9 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                 return None
 
         for tool in value:
-            openai_function_object: Optional[
-                ChatCompletionToolParamFunctionChunk
-            ] = None
+            openai_function_object: Optional[ChatCompletionToolParamFunctionChunk] = (
+                None
+            )
             if "function" in tool:  # tools list
                 _openai_function_object = ChatCompletionToolParamFunctionChunk(  # type: ignore
                     **tool["function"]
@@ -423,7 +423,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
         reasoning_effort: Optional[str],
     ) -> GeminiThinkingConfig:
         if not reasoning_effort:
-            return {"includeThoughts": True}
+            return { "includeThoughts": True }
         if reasoning_effort == "low":
             return {
                 "thinkingBudget": DEFAULT_REASONING_EFFORT_LOW_THINKING_BUDGET,
@@ -601,14 +601,14 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
             elif param == "seed":
                 optional_params["seed"] = value
             elif param == "reasoning_effort" and isinstance(value, str):
-                optional_params[
-                    "thinkingConfig"
-                ] = VertexGeminiConfig._map_reasoning_effort_to_thinking_budget(value)
+                optional_params["thinkingConfig"] = (
+                    VertexGeminiConfig._map_reasoning_effort_to_thinking_budget(value)
+                )
             elif param == "thinking":
-                optional_params[
-                    "thinkingConfig"
-                ] = VertexGeminiConfig._map_thinking_param(
-                    cast(AnthropicThinkingParam, value)
+                optional_params["thinkingConfig"] = (
+                    VertexGeminiConfig._map_thinking_param(
+                        cast(AnthropicThinkingParam, value)
+                    )
                 )
             elif param == "modalities" and isinstance(value, list):
                 response_modalities = self.map_response_modalities(value)
@@ -619,10 +619,10 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                     optional_params, [_tools]
                 )
         if supports_reasoning(model):
-            optional_params[
-                "thinkingConfig"
-            ] = VertexGeminiConfig._map_reasoning_effort_to_thinking_budget(
-                non_default_params.get("reasoning_effort")
+            optional_params["thinkingConfig"] = (
+                VertexGeminiConfig._map_reasoning_effort_to_thinking_budget(
+                    non_default_params.get("reasoning_effort")
+                )
             )
         if litellm.vertex_ai_safety_settings is not None:
             optional_params["safety_settings"] = litellm.vertex_ai_safety_settings
@@ -801,7 +801,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                     content_str += _content_str
 
         return content_str, reasoning_content_str
-
+    
     def _extract_image_response_from_parts(
         self, parts: List[HttpxPartType]
     ) -> Optional[ImageURLObject]:
@@ -813,7 +813,10 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                 if mime_type.startswith("image/"):
                     # Convert base64 data to data URI format
                     data_uri = f"data:{mime_type};base64,{data}"
-                    return ImageURLObject(url=data_uri, detail="auto")
+                    return ImageURLObject(
+                        url=data_uri,
+                        detail="auto"
+                    )
         return None
 
     def _extract_audio_response_from_parts(
@@ -1025,6 +1028,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
             GenerateContentResponseBody, BidiGenerateContentServerMessage
         ],
     ) -> Usage:
+
         if (
             completion_response is not None
             and "usageMetadata" not in completion_response
@@ -1132,7 +1136,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                 elif web_search_queries:
                     web_search_requests = len(grounding_metadata)
         return web_search_requests
-
+    
     @staticmethod
     def _create_streaming_choice(
         chat_completion_message: ChatCompletionResponseMessage,
@@ -1156,7 +1160,9 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
             index=candidate.get("index", idx),
             delta=Delta(
                 content=chat_completion_message.get("content"),
-                reasoning_content=chat_completion_message.get("reasoning_content"),
+                reasoning_content=chat_completion_message.get(
+                    "reasoning_content"
+                ),
                 tool_calls=tools,
                 image=image_response,
                 function_call=functions,
@@ -1167,15 +1173,13 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
         return choice
 
     @staticmethod
-    def _extract_candidate_metadata(
-        candidate: Candidates,
-    ) -> Tuple[List[dict], List[dict], List, List]:
+    def _extract_candidate_metadata(candidate: Candidates) -> Tuple[List[dict], List[dict], List, List]:
         """
         Extract metadata from a single candidate response.
-
+        
         Returns:
             grounding_metadata: List[dict]
-            url_context_metadata: List[dict]
+            url_context_metadata: List[dict] 
             safety_ratings: List
             citation_metadata: List
         """
@@ -1183,7 +1187,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
         url_context_metadata: List[dict] = []
         safety_ratings: List = []
         citation_metadata: List = []
-
+        
         if "groundingMetadata" in candidate:
             if isinstance(candidate["groundingMetadata"], list):
                 grounding_metadata.extend(candidate["groundingMetadata"])  # type: ignore
@@ -1199,13 +1203,8 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
         if "urlContextMetadata" in candidate:
             # Add URL context metadata to grounding metadata
             url_context_metadata.append(cast(dict, candidate["urlContextMetadata"]))
-
-        return (
-            grounding_metadata,
-            url_context_metadata,
-            safety_ratings,
-            citation_metadata,
-        )
+            
+        return grounding_metadata, url_context_metadata, safety_ratings, citation_metadata
 
     @staticmethod
     def _process_candidates(
@@ -1249,7 +1248,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                 candidate_safety_ratings,
                 candidate_citation_metadata,
             ) = VertexGeminiConfig._extract_candidate_metadata(candidate)
-
+            
             grounding_metadata.extend(candidate_grounding_metadata)
             url_context_metadata.extend(candidate_url_context_metadata)
             safety_ratings.extend(candidate_safety_ratings)
@@ -1281,9 +1280,7 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
                     chat_completion_message["content"] = None  # OpenAI spec
                 elif image_response is not None:
                     # Handle image response - combine with text content into structured format
-                    cast(Dict[str, Any], chat_completion_message)[
-                        "image"
-                    ] = image_response
+                    cast(Dict[str, Any], chat_completion_message)["image"] = image_response
                 elif content is not None:
                     chat_completion_message["content"] = content
 
@@ -1313,12 +1310,12 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
             if isinstance(model_response, ModelResponseStream):
                 choice = VertexGeminiConfig._create_streaming_choice(
                     chat_completion_message=chat_completion_message,
-                    candidate=candidate,
-                    idx=idx,
-                    tools=tools,
-                    functions=functions,
+                    candidate=candidate, 
+                    idx=idx, 
+                    tools=tools, 
+                    functions=functions, 
                     chat_completion_logprobs=chat_completion_logprobs,
-                    image_response=image_response,
+                    image_response=image_response
                 )
                 model_response.choices.append(choice)
             elif isinstance(model_response, ModelResponse):
@@ -1450,28 +1447,28 @@ class VertexGeminiConfig(VertexAIBaseConfig, BaseConfig):
             ## ADD METADATA TO RESPONSE ##
 
             setattr(model_response, "vertex_ai_grounding_metadata", grounding_metadata)
-            model_response._hidden_params[
-                "vertex_ai_grounding_metadata"
-            ] = grounding_metadata
+            model_response._hidden_params["vertex_ai_grounding_metadata"] = (
+                grounding_metadata
+            )
 
             setattr(
                 model_response, "vertex_ai_url_context_metadata", url_context_metadata
             )
 
-            model_response._hidden_params[
-                "vertex_ai_url_context_metadata"
-            ] = url_context_metadata
+            model_response._hidden_params["vertex_ai_url_context_metadata"] = (
+                url_context_metadata
+            )
 
             setattr(model_response, "vertex_ai_safety_results", safety_ratings)
-            model_response._hidden_params[
-                "vertex_ai_safety_results"
-            ] = safety_ratings  # older approach - maintaining to prevent regressions
+            model_response._hidden_params["vertex_ai_safety_results"] = (
+                safety_ratings  # older approach - maintaining to prevent regressions
+            )
 
             ## ADD CITATION METADATA ##
             setattr(model_response, "vertex_ai_citation_metadata", citation_metadata)
-            model_response._hidden_params[
-                "vertex_ai_citation_metadata"
-            ] = citation_metadata  # older approach - maintaining to prevent regressions
+            model_response._hidden_params["vertex_ai_citation_metadata"] = (
+                citation_metadata  # older approach - maintaining to prevent regressions
+            )
 
         except Exception as e:
             raise VertexAIError(

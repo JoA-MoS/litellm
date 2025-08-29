@@ -52,6 +52,7 @@ def prompt_initializer(
 
         return dot_prompt_manager
     except Exception as e:
+
         raise e
 
 

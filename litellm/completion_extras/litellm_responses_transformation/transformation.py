@@ -146,10 +146,10 @@ class LiteLLMResponsesTransformationHandler(CompletionTransformationBridge):
                 responses_api_request["max_output_tokens"] = value
             elif key == "tools" and value is not None:
                 # Convert chat completion tools to responses API tools format
-                responses_api_request[
-                    "tools"
-                ] = self._convert_tools_to_responses_format(
-                    cast(List[Dict[str, Any]], value)
+                responses_api_request["tools"] = (
+                    self._convert_tools_to_responses_format(
+                        cast(List[Dict[str, Any]], value)
+                    )
                 )
             elif key in ResponsesAPIOptionalRequestParams.__annotations__.keys():
                 responses_api_request[key] = value  # type: ignore
@@ -158,9 +158,7 @@ class LiteLLMResponsesTransformationHandler(CompletionTransformationBridge):
             elif key in ("previous_response_id"):
                 responses_api_request["previous_response_id"] = value
 
-        responses_api_request["reasoning"] = self._map_reasoning_effort(
-            optional_params.get("reasoning_effort")
-        )
+        responses_api_request["reasoning"] = self._map_reasoning_effort(optional_params.get("reasoning_effort"))
 
         # Get stream parameter from litellm_params if not in optional_params
         stream = optional_params.get("stream") or litellm_params.get("stream", False)
