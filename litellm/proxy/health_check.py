@@ -106,8 +106,8 @@ async def _proxy_health_check(
             proxy_logging_obj = plo
         except ImportError:
             # If not available, create a minimal one
-            from litellm.proxy.utils import ProxyLogging
-            proxy_logging_obj = ProxyLogging()
+            from litellm.proxy.utils import ProxyLogging, DualCache
+            proxy_logging_obj = ProxyLogging(user_api_key_cache=DualCache())
         
         # Prepare the request data for health check
         health_check_data = {
